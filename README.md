@@ -2,27 +2,46 @@
 
 Weekly grocery planner for Singapore families. Plan the week in 5 minutes, share the list on WhatsApp or via a web link, learn real prices from receipts, and stick to your budget.
 
-## Features (prototype)
+Built with **Next.js (App Router)** + plain CSS. State lives in `localStorage` for now; Supabase realtime sync is milestone 2.
 
-Shared weekly lists with budget tracking, smart add with variant suggestions, saved & duplicable lists, per-item shop assignment (FairPrice / Giant / wet market / Indian shop…), group-by-shop shopping view, receipt parsing that learns item prices, spend analytics, WhatsApp share with live preview, and a no-login web view link so helpers or family can tick items off while shopping.
+## Features
 
-Everything is a single static file (`index.html`) — no build step, no backend. State persists in `localStorage`.
+Shared weekly lists with budget tracking, smart add with variant suggestions, saved & duplicable lists, per-item shop assignment (FairPrice / Giant / wet market / Indian shop…), group-by-shop shopping view, receipt parsing that learns item prices, spend analytics, WhatsApp share with live preview, and a no-login web view (`/s#…`) so helpers or family can tick items off while shopping.
 
-## Run locally
+The original single-file prototype is preserved at [`/prototype.html`](./public/prototype.html).
 
-Open `index.html` in a browser, or:
+## Development
 
 ```bash
-python3 -m http.server 8765
-# → http://localhost:8765
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+```
+
+## Project structure
+
+```
+app/
+  page.js        app shell: onboarding → tabs (List, My Lists, Receipt, Insights)
+  s/page.js      shopper web view (opened from share links)
+  globals.css    design system
+components/      Onboarding, Header, ListTab, ListsTab, ReceiptTab, InsightsTab, ShareSheets
+lib/
+  catalog.js     seed catalog (SG staples), base/demo state
+  pricing.js     price prediction (recency-weighted), totals
+  suggest.js     type-ahead + receipt line matching
+  share.js       WhatsApp message + share-link encoding
+  store.js       React context store, localStorage persistence
 ```
 
 ## Deploy on Vercel
 
-1. Import this repo at [vercel.com/new](https://vercel.com/new)
-2. Framework preset: **Other** — no build command, output directory: root
-3. Deploy. The app is served at `/`, and shared web-view links (`#shop=…`) work out of the box.
+Import the repo at [vercel.com/new](https://vercel.com/new) — Next.js is auto-detected, no configuration needed. Every push to `main` redeploys.
 
 ## Roadmap
 
-See [PRODUCT-PLAN.md](./PRODUCT-PLAN.md) — phases cover realtime sync (Supabase), receipt OCR via LLM, WhatsApp Business Cloud API notifications, and habit/savings features.
+See [PRODUCT-PLAN.md](./PRODUCT-PLAN.md).
+
+1. **Milestone 1 (this)** — full prototype feature set, localStorage, deployable PWA shell
+2. **Milestone 2** — Supabase auth + realtime shared lists (live sync between family members and the shopper view)
+3. **Milestone 3** — receipt photo OCR via Claude API, WhatsApp Cloud API notifications, savings suggestions
