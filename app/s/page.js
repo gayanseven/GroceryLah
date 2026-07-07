@@ -76,7 +76,9 @@ export default function ShopperPage() {
                 <div key={idx} className={`item ${done[idx] ? "bought" : ""}`}
                   style={{ cursor: "pointer" }} onClick={() => toggle(idx)}>
                   <div className="chk">{done[idx] ? "✓" : ""}</div>
-                  <div className="iinfo"><div className="nm">{it.t}</div></div>
+                  <div className="iinfo">
+                    <div className="nm">{it.t} {it.f ? <span className="pill new">New</span> : null}</div>
+                  </div>
                   {it.q > 1 && (
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>
                       x{it.q}

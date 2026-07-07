@@ -29,7 +29,7 @@ function ItemRow({ li }) {
         {li.status === "bought" ? "✓" : ""}
       </div>
       <div className="iinfo">
-        <div className="nm">{c.name}</div>
+        <div className="nm">{c.name} {li.addedAfterFinalize && <span className="pill new">New</span>}</div>
         <div className="sub">
           {S.showPrices &&
             (li.actual != null ? (
@@ -66,6 +66,15 @@ function ItemRow({ li }) {
   );
 }
 
+function relTime(ms) {
+  const diff = Date.now() - ms;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor(diff / 60000);
+  if (h > 0) return `${h}h ago`;
+  if (m > 0) return `${m}m ago`;
+  return "just now";
+}
+
 export default function ListTab() {
   const { S, update, toast, partnerPing } = useApp();
   const [q, setQ] = useState("");
@@ -91,12 +100,12 @@ export default function ListTab() {
         existing.qty = Math.min(8, existing.qty + 1);
         bumped = existing.qty;
       } else {
-        al.items.push({ id: s.nextId++, cid, qty: 1, status: "planned", by: s.user, actual: null, shop: null });
+        al.items.push({ id: s.nextId++, cid, qty: 1, status: "planned", by: s.user, actual: null, shop: null, addedAfterFinalize: !!al.finalized });
       }
     });
     setQ("");
     toast(bumped ? `${c.name} → x${bumped}` : `Added ${c.name}`);
-    partnerPing(`${S.user} added ${c.name}`);
+    partnerPing(l.finalized ? `${S.user} added ${c.name} after finalisation` : `${S.user} added ${c.name}`);
   };
 
   const addNew = () => {
@@ -107,11 +116,11 @@ export default function ListTab() {
       const c = { id: s.nextId++, name: pretty, cat: "Pantry", unit: "pc", hist: [], staple: false, shop: null };
       s.catalog.push(c);
       const al = s.lists.find((x) => x.id === s.activeList) || s.lists[0];
-      al.items.push({ id: s.nextId++, cid: c.id, qty: 1, status: "planned", by: s.user, actual: null, shop: null });
+        al.items.push({ id: s.nextId++, cid: c.id, qty: 1, status: "planned", by: s.user, actual: null, shop: null, addedAfterFinalize: !!al.finalized });
     });
     setQ("");
     toast(`Added ${pretty} — price learns from your first receipt`);
-    partnerPing(`${S.user} added ${pretty}`);
+    partnerPing(l.finalized ? `${S.user} added ${pretty} after finalisation` : `${S.user} added ${pretty}`);
   };
 
   const pickFirst = () => {
@@ -232,6 +241,20 @@ export default function ListTab() {
       )}
 
       <div className="share-row">
+        {l.finalized ? (
+          <div className="finalised-chip">
+            ✓ Finalised
+            {l.finalizedAt && <span>{relTime(l.finalizedAt)}</span>}
+          </div>
+        ) : (
+          <button className="finalise-btn" onClick={() => {
+            update((s) => {
+              const al = s.lists.find((x) => x.id === s.activeList) || s.lists[0];
+              if (al) { al.finalized = true; al.finalizedAt = Date.now(); }
+            });
+            toast("List finalised — new additions will be flagged");
+          }}>🔒 Finalise</button>
+        )}
         <button className="wa-btn" onClick={() => setSheet("share")}>🔗 Share</button>
       </div>
 
