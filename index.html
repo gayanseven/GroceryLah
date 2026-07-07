@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroceryLah — Weekly Grocery Planner</title>
+<style>
+  :root{
+    --bg:#f4f6f4; --card:#ffffff; --ink:#1c2b23; --muted:#6b7f73;
+    --green:#1e7d4f; --green-soft:#e3f2ea; --amber:#c77d1b; --amber-soft:#fdf0dc;
+    --red:#c0392b; --red-soft:#fbe4e1; --line:#e4eae6; --accent:#0f5d38;
+    --wa:#25d366; --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:#dfe5df;display:flex;justify-content:center;min-height:100vh;padding:16px 0;line-height:1.45}
+  .phone{width:400px;max-width:100vw;background:var(--bg);border-radius:24px;overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;height:820px;max-height:96vh;position:relative}
+  header{background:var(--accent);color:#fff;padding:14px 18px 12px}
+  header .top{display:flex;justify-content:space-between;align-items:center}
+  header h1{font-size:17px;font-weight:700;letter-spacing:.2px}
+  header .week{font-size:12px;opacity:.85}
+  .user-switch{display:flex;gap:4px;background:rgba(255,255,255,.15);border-radius:20px;padding:3px}
+  .user-switch button{border:0;background:transparent;color:#fff;font-size:11px;padding:4px 10px;border-radius:16px;cursor:pointer;opacity:.7}
+  .user-switch button.on{background:#fff;color:var(--accent);opacity:1;font-weight:600}
+  .budgetbox{margin-top:10px;background:rgba(255,255,255,.12);border-radius:10px;padding:9px 12px}
+  .budgetbox .nums{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+  .budgetbox b{font-size:14px}
+  .bar{height:8px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;position:relative}
+  .bar .est{position:absolute;height:100%;background:#ffd166;border-radius:6px;transition:width .3s}
+  .bar .act{position:absolute;height:100%;background:#7ce3ab;border-radius:6px;transition:width .3s}
+  .bar.over .est{background:#ff8a7a}
+  .budget-edit{background:none;border:none;color:#fff;opacity:.75;cursor:pointer;font-size:11px;text-decoration:underline}
+  main{flex:1;overflow-y:auto;padding:18px 16px 10px}
+  nav{display:flex;background:var(--card);border-top:1px solid var(--line)}
+  nav button{flex:1;border:0;background:none;padding:10px 4px 12px;font-size:11px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button .ic{font-size:20px;line-height:1}
+  nav button.on{color:var(--accent);font-weight:700}
+  .card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card h3{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin-bottom:12px;font-weight:700}
+  .addwrap{position:relative;margin-bottom:14px}
+  .addrow{display:flex;gap:8px}
+  .addrow input{flex:1;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;background:var(--card)}
+  .addrow input:focus{outline:none;border-color:var(--accent)}
+  .suggest{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card);border-radius:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,.16);z-index:20;overflow:hidden;max-height:264px;overflow-y:auto}
+  .sug{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:14px}
+  .sug:last-child{border-bottom:0}
+  .sug:hover{background:var(--green-soft)}
+  .sug .scat{margin-left:auto;font-size:10px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:10px;flex:none}
+  .sug.new{color:var(--accent);font-weight:600}
+  .sug .onlist{font-size:10px;color:var(--green);font-weight:700;flex:none}
+  .sug-hint{padding:9px 14px;font-size:11px;color:var(--muted);background:var(--bg)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:7px 13px;font-size:12.5px;color:var(--ink);cursor:pointer}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.sel{background:var(--green-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .mode-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+  .mode-row .cnt{font-size:12.5px;color:var(--muted);flex:1}
+  .mode-btn{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:6px 12px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .mode-btn.on{background:var(--green-soft);color:var(--accent);border-color:transparent;font-weight:600}
+  .cat-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin:20px 4px 10px}
+  .item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .item.bought{opacity:.55}
+  .item.bought .nm{text-decoration:line-through}
+  .chk{width:24px;height:24px;border:2px solid var(--green);border-radius:8px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;background:#fff}
+  .item.bought .chk{background:var(--green)}
+  .iinfo{flex:1;min-width:0}
+  .nm{font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-.1px}
+  .sub{font-size:12px;color:#8fa196;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .sub .conf{color:var(--amber)}
+  .qsel,.shopsel{border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  .qsel{padding:5px 4px;font-size:13px;font-weight:600}
+  .shopsel{font-size:11px;padding:2px 3px;color:var(--muted);border-color:transparent;background:var(--bg);border-radius:9px;max-width:110px}
+  .prc{font-size:13.5px;font-weight:700;color:var(--ink);min-width:54px;text-align:right;font-variant-numeric:tabular-nums}
+  .del{border:0;background:none;color:#c9d4cd;font-size:16px;cursor:pointer;padding:2px}
+  .del:hover{color:var(--red)}
+  .wa-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--wa);color:#fff;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin:4px 0 10px}
+  .ghost-btn{display:block;width:100%;background:none;border:1.5px dashed var(--line);color:var(--muted);border-radius:12px;padding:10px;font-size:13px;cursor:pointer;margin-bottom:10px}
+  .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600}
+  .pill.ok{background:var(--green-soft);color:var(--green)}
+  .pill.warn{background:var(--amber-soft);color:var(--amber)}
+  .pill.bad{background:var(--red-soft);color:var(--red)}
+  textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-size:13px;font-family:ui-monospace,monospace;min-height:110px;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;width:100%}
+  .btn.sec{background:var(--green-soft);color:var(--accent)}
+  .match{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .match:last-child{border-bottom:0}
+  .match .raw{color:var(--muted);font-size:11px}
+  .match select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;max-width:130px}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .stat{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .stat .v{font-size:20px;font-weight:800;color:var(--ink)}
+  .stat .l{font-size:11px;color:var(--muted);margin-top:3px}
+  .hbar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .hbar .lbl{font-size:12px;width:86px;color:var(--ink);flex:none}
+  .hbar .trk{flex:1;height:14px;background:var(--green-soft);border-radius:7px;overflow:hidden}
+  .hbar .fil{height:100%;border-radius:7px}
+  .hbar .val{font-size:11px;font-weight:700;width:46px;text-align:right;color:var(--muted)}
+  .weeks{display:flex;align-items:flex-end;gap:8px;height:110px;padding:4px 2px 0}
+  .wk{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .wk .col{width:100%;border-radius:6px 6px 0 0;background:var(--green);position:relative;min-height:6px}
+  .wk .col.over{background:var(--red)}
+  .wk .cap{font-size:9px;color:var(--muted)}
+  .wk .amt{font-size:9px;font-weight:700;color:var(--ink)}
+  .note{font-size:12px;color:var(--muted);line-height:1.55;margin-top:8px}
+  .toast{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:99}
+  .toast.show{opacity:.95}
+  .riser{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .riser:last-child{border-bottom:0}
+  .riser .up{color:var(--red);font-weight:700}.riser .dn{color:var(--green);font-weight:700}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
+  .offplan-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+  .offplan-row input{border:1.5px solid var(--line);border-radius:8px;padding:9px;font-size:13px}
+  .offplan-row input.desc{flex:2}.offplan-row input.amt{flex:1;min-width:0}
+  .offplan-row .opadd{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px;flex:none}
+  .streak{display:flex;gap:5px;margin-top:6px}
+  .streak .dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .streak .hit{background:var(--green);color:#fff}.streak .miss{background:var(--red-soft);color:var(--red)}
+  /* WhatsApp preview modal */
+  .wa-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+  .wa-sheet{background:#f0f2f5;width:100%;border-radius:22px 22px 0 0;max-height:88%;display:flex;flex-direction:column;overflow:hidden;animation:up .25s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
+  .wa-head{background:#075e54;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .wa-head .avatar{width:34px;height:34px;border-radius:50%;background:#c8e6c9;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .wa-head .who{flex:1}
+  .wa-head .who b{font-size:14px;display:block}
+  .wa-head .who span{font-size:11px;opacity:.8}
+  .wa-head .x{background:none;border:0;color:#fff;font-size:20px;cursor:pointer;opacity:.85;padding:4px}
+  .wa-chat{flex:1;overflow-y:auto;padding:16px 14px;background:#efe7dc url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" opacity="0.05"><circle cx="20" cy="20" r="2" fill="%23555"/><circle cx="60" cy="50" r="2" fill="%23555"/><circle cx="35" cy="65" r="2" fill="%23555"/></svg>')}
+  .wa-bubble{background:#e7ffdb;border-radius:10px;border-top-right-radius:2px;padding:10px 12px;margin-left:44px;
+    box-shadow:0 1px 1px rgba(0,0,0,.12);font-size:13.2px;line-height:1.5;color:#111;white-space:pre-wrap;word-break:break-word;position:relative}
+  .wa-bubble .meta{display:flex;justify-content:flex-end;gap:4px;font-size:10px;color:#7c8b80;margin-top:4px;align-items:center}
+  .wa-bubble .ticks{color:#53bdeb;font-size:12px}
+  .wa-actions{padding:12px 16px 16px;display:flex;gap:10px;background:#f0f2f5}
+  .wa-actions a,.wa-actions button{flex:1;border:0;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+  .wa-open{background:var(--wa);color:#fff}
+  .wa-copy{background:#fff;color:var(--ink);border:1.5px solid var(--line) !important}
+  /* Onboarding + sheets */
+  .ob{position:absolute;inset:0;background:var(--bg);z-index:60;display:flex;flex-direction:column;overflow-y:auto;padding:34px 24px 24px}
+  .ob .logo{font-size:40px;text-align:center;margin-bottom:8px}
+  .ob h2{font-size:22px;text-align:center;color:var(--ink);letter-spacing:-.3px;margin-bottom:6px}
+  .ob .tag{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:26px;line-height:1.55}
+  .ob label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:16px 2px 7px}
+  .ob input[type=text],.ob input[type=number]{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;background:var(--card)}
+  .ob input:focus{outline:none;border-color:var(--accent)}
+  .ob .dots{display:flex;gap:6px;justify-content:center;margin:22px 0 14px}
+  .ob .dots span{width:8px;height:8px;border-radius:50%;background:var(--line)}
+  .ob .dots span.on{background:var(--accent)}
+  .ob .skip{background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;margin-top:14px}
+  .ob .foot{margin-top:auto;padding-top:18px}
+  .pickgrid{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .lists-card{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:15px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:pointer}
+  .lists-card.active{outline:2px solid var(--accent)}
+  .lists-card .linfo{flex:1;min-width:0}
+  .lists-card .lname{font-size:15px;font-weight:700;color:var(--ink)}
+  .lists-card .lsub{font-size:12px;color:var(--muted);margin-top:3px}
+  .lists-card .lbadge{font-size:10px;font-weight:700;color:var(--accent);background:var(--green-soft);border-radius:10px;padding:3px 8px;flex:none}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <header id="hdr">
+    <div class="top">
+      <div>
+        <h1>🥬 GroceryLah</h1>
+        <div class="week" id="weekLabel"></div>
+      </div>
+    </div>
+    <div class="budgetbox">
+      <div class="nums">
+        <span>Est. <b id="estTotal">$0</b> · Actual <b id="actTotal">$0</b></span>
+        <span>Budget <b id="budgetVal">$0</b> <button class="budget-edit" onclick="editBudget()">edit</button></span>
+      </div>
+      <div class="bar" id="budgetBar"><div class="est" id="estBar"></div><div class="act" id="actBar"></div></div>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <nav id="nav">
+    <button data-tab="list" class="on"><span class="ic">🛒</span>List</button>
+    <button data-tab="lists"><span class="ic">🗂️</span>My Lists</button>
+    <button data-tab="receipt"><span class="ic">🧾</span>Receipt</button>
+    <button data-tab="insights"><span class="ic">📊</span>Insights</button>
+  </nav>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ================= Seed catalog (SG staples, learned price memory) ================= */
+const CATS = ["Rice & Staples","Fresh Produce","Meat & Seafood","Dairy & Eggs","Pantry","Household","Snacks & Drinks"];
+const DEFAULT_SHOPS = ["FairPrice","Giant","Sheng Siong","Cold Storage","Wet market","Indian shop"];
+const seedCatalog = [
+ ["Jasmine Rice 5kg","Rice & Staples","bag",[13.50,13.90,13.90],true,null],
+ ["Eggs 30pk","Dairy & Eggs","tray",[8.20,8.50,8.65],true,null],
+ ["Meiji Milk 2L","Dairy & Eggs","btl",[6.10,6.40,6.40],true,null],
+ ["Kang Kong","Fresh Produce","pkt",[1.20,1.35,1.40],true,"Wet market"],
+ ["Xiao Bai Cai","Fresh Produce","pkt",[1.30,1.30,1.45],true,"Wet market"],
+ ["Tomatoes 500g","Fresh Produce","pkt",[2.20,2.35],false,"Wet market"],
+ ["Bananas (Del Monte)","Fresh Produce","bunch",[2.80,2.95,3.10],true,null],
+ ["Chicken Thigh 500g","Meat & Seafood","pkt",[5.50,5.80,5.95],true,null],
+ ["Batang Fish Steak","Meat & Seafood","pkt",[9.80,10.20],false,"Wet market"],
+ ["Prawns 300g","Meat & Seafood","pkt",[8.90],false,"Wet market"],
+ ["Minced Pork 300g","Meat & Seafood","pkt",[4.60,4.75],false,null],
+ ["Gardenia Bread","Rice & Staples","loaf",[2.75,2.75,2.90],true,null],
+ ["Bee Hoon 400g","Rice & Staples","pkt",[1.85],false,null],
+ ["Milo 900g Refill","Snacks & Drinks","pkt",[12.90,13.50],false,null],
+ ["Kopi-O Powder","Snacks & Drinks","pkt",[4.90],false,null],
+ ["Yakult 5pk","Dairy & Eggs","pkt",[3.10,3.25],false,null],
+ ["Soy Sauce (Tai Hua)","Pantry","btl",[2.60],false,null],
+ ["Cooking Oil 2L","Pantry","btl",[7.80,8.10],true,null],
+ ["Ikan Bilis 200g","Pantry","pkt",[5.40],false,"Indian shop"],
+ ["Dhal 500g","Pantry","pkt",[2.80],false,"Indian shop"],
+ ["Curry Powder 250g","Pantry","pkt",[3.60],false,"Indian shop"],
+ ["Dish Soap (Mama Lemon)","Household","btl",[2.30,2.30],false,null],
+ ["Toilet Rolls 10pk","Household","pkt",[6.50,6.90],true,null],
+ ["Laundry Detergent 3kg","Household","pkt",[11.90],false,null],
+ ["Tofu (Silken) 2pk","Fresh Produce","pkt",[1.60,1.60],true,null],
+ ["Apples Fuji 6pk","Fresh Produce","pkt",[4.20,4.50],false,null],
+ ["Cheese Slices 12s","Dairy & Eggs","pkt",[4.05],false,null],
+];
+function makeCatalog(){ return seedCatalog.map((s,i)=>({id:i+1,name:s[0],cat:s[1],unit:s[2],hist:[...s[3]],staple:s[4],shop:s[5]})); }
+
+const baseState = () => ({
+  onboarded:false,
+  household:"", budget:160, showPrices:false, groupBy:"cat",
+  user:"", users:[],
+  shops:["FairPrice","Wet market","Indian shop"],
+  catalog: makeCatalog(),
+  lists: [], activeList: null,
+  history: [
+    {label:"7 Jun",spend:171.4,budget:160},
+    {label:"14 Jun",spend:158.2,budget:160},
+    {label:"21 Jun",spend:149.8,budget:160},
+    {label:"28 Jun",spend:155.6,budget:160},
+  ],
+  estAccuracy:[88,91,94,96],
+  nextId: 100,
+});
+function demoState(){
+  const s = baseState();
+  s.onboarded = true; s.household = "Gunarathne family";
+  s.user = "Gayan"; s.users = ["Gayan","Nadee"];
+  const items = [[1,1],[2,1],[3,2],[4,2],[7,1],[8,2],[12,1],[18,1],[23,1],[25,1],[5,1],[9,1],[10,1],[11,1],[14,1],[16,1],[24,1],[26,1]]
+    .map(([cid,qty],i)=>({id:i+1,cid,qty,status:"planned",by:i%2?"Nadee":"Gayan",actual:null,shop:null}));
+  s.lists = [{id:1,name:"Week of 7 Jul",budget:160,items,offPlan:[{desc:"7-Eleven ice cream",amt:3.50,by:"Gayan"}]}];
+  s.activeList = 1;
+  return s;
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem("grocerylah2")) || baseState(); }
+catch(e){ S = baseState(); }
+function save(){ try{ localStorage.setItem("grocerylah2", JSON.stringify(S)); }catch(e){} render(); }
+function L(){ return S.lists.find(l=>l.id===S.activeList) || S.lists[0]; }
+
+/* ================= price prediction ================= */
+function predict(item){
+  const h = item.hist;
+  if(!h || !h.length) return {p:null, conf:0};
+  let w=0, sum=0;
+  h.forEach((p,i)=>{ const wt = Math.pow(1.6,i); w+=wt; sum+=p*wt; });
+  return {p: sum/w, conf: Math.min(h.length,3)};
+}
+const fmt = n => "$"+n.toFixed(2);
+const catItem = cid => S.catalog.find(c=>c.id===cid);
+const itemShop = li => li.shop || catItem(li.cid).shop || null;
+
+function totals(){
+  const l = L(); let est=0, act=0;
+  if(!l) return {est,act};
+  l.items.forEach(li=>{
+    if(li.status==="skipped") return;
+    est += li.actual!=null ? li.actual : (predict(catItem(li.cid)).p||0)*li.qty;
+    if(li.actual!=null) act += li.actual;
+  });
+  l.offPlan.forEach(o=>{ act+=o.amt; est+=o.amt; });
+  return {est,act};
+}
+
+/* ================= header ================= */
+function renderHeader(){
+  const hdr = document.getElementById("hdr");
+  if(!S.onboarded){ hdr.style.display="none"; document.getElementById("nav").style.display="none"; return; }
+  hdr.style.display=""; document.getElementById("nav").style.display="";
+  const l = L(); const t = totals();
+  const budget = l ? l.budget : S.budget;
+  document.getElementById("estTotal").textContent = fmt(t.est);
+  document.getElementById("actTotal").textContent = fmt(t.act);
+  document.getElementById("budgetVal").textContent = "$"+budget;
+  const bar = document.getElementById("budgetBar");
+  bar.classList.toggle("over", t.est > budget);
+  document.getElementById("estBar").style.width = Math.min(100, t.est/budget*100)+"%";
+  document.getElementById("actBar").style.width = Math.min(100, t.act/budget*100)+"%";
+  document.getElementById("weekLabel").textContent = (S.household?S.household+" · ":"") + (l?l.name:"no list");
+}
+function editBudget(){
+  const l = L(); if(!l) return;
+  const v = prompt("Budget for this list (S$):", l.budget);
+  const n = parseFloat(v);
+  if(!isNaN(n) && n>0){ l.budget = n; save(); toast("Budget updated"); }
+}
+
+/* ================= tabs ================= */
+let tab = "list";
+document.getElementById("nav").addEventListener("click",e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  tab = b.dataset.tab;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+
+/* ================= ONBOARDING ================= */
+let ob = {step:1, household:"", m1:"", m2:"", budget:160, shops:["FairPrice","Wet market","Indian shop"], picked:null, custom:""};
+function renderOnboarding(){
+  const ph = document.getElementById("phone");
+  let old = document.getElementById("obPanel"); if(old) old.remove();
+  const d = document.createElement("div");
+  d.className="ob"; d.id="obPanel";
+  let h = "";
+  if(ob.step===1){
+    h = `<div class="logo">🥬</div><h2>Welcome to GroceryLah</h2>
+      <div class="tag">One shared list for the whole household.<br>Plan in 5 minutes, stick to your budget.</div>
+      <label>Household name</label>
+      <input type="text" id="obHouse" placeholder="e.g. Tan family" value="${ob.household}" oninput="ob.household=this.value">
+      <label>Your name</label>
+      <input type="text" id="obM1" placeholder="e.g. Gayan" value="${ob.m1}" oninput="ob.m1=this.value">
+      <label>Partner / family member</label>
+      <input type="text" id="obM2" placeholder="e.g. Nadee" value="${ob.m2}" oninput="ob.m2=this.value">
+      <div class="foot"><button class="btn" onclick="obNext(2)">Continue</button>
+      <div style="text-align:center"><button class="skip" onclick="loadDemo()">Skip — explore with demo data</button></div></div>`;
+  } else if(ob.step===2){
+    h = `<div class="logo">💰</div><h2>Budget & your shops</h2>
+      <div class="tag">Set a weekly target and tell us where you usually buy.</div>
+      <label>Weekly grocery budget (S$)</label>
+      <input type="number" id="obBudget" value="${ob.budget}" oninput="ob.budget=parseFloat(this.value)||160" inputmode="decimal">
+      <label>Where do you shop?</label>
+      <div class="pickgrid">${DEFAULT_SHOPS.map(s=>
+        `<button class="chip ${ob.shops.includes(s)?'sel':''}" onclick="obToggleShop('${s}')">${s}</button>`).join("")}
+        ${ob.shops.filter(s=>!DEFAULT_SHOPS.includes(s)).map(s=>`<button class="chip sel" onclick="obToggleShop('${s}')">${s}</button>`).join("")}</div>
+      <label>Add another shop</label>
+      <input type="text" id="obCustom" placeholder="e.g. Mustafa, RedMart" value="${ob.custom}" oninput="ob.custom=this.value"
+        onkeydown="if(event.key==='Enter')obAddShop()">
+      <div class="foot"><button class="btn" onclick="obNext(3)">Continue</button></div>`;
+  } else {
+    if(!ob.picked) ob.picked = S.catalog.filter(c=>c.staple).map(c=>c.id);
+    h = `<div class="logo">🛒</div><h2>Build your first list</h2>
+      <div class="tag">These are commonly bought items in SG households.<br>Tap to add or remove — you can always edit later.</div>
+      <div class="pickgrid">${S.catalog.map(c=>
+        `<button class="chip ${ob.picked.includes(c.id)?'sel':''}" onclick="obTogglePick(${c.id})">${c.name}</button>`).join("")}</div>
+      <div class="foot">
+        <div class="note" style="text-align:center;margin-bottom:10px">${ob.picked.length} items selected</div>
+        <button class="btn" onclick="finishOnboarding()">Create my list →</button></div>`;
+  }
+  h = `<div class="dots">${[1,2,3].map(i=>`<span class="${i<=ob.step?'on':''}"></span>`).join("")}</div>` + h;
+  d.innerHTML = h;
+  ph.appendChild(d);
+}
+function obNext(step){
+  if(ob.step===1 && !ob.m1.trim()){ toast("Enter your name"); return; }
+  ob.step = step; renderOnboarding();
+}
+function obToggleShop(s){
+  ob.shops = ob.shops.includes(s) ? ob.shops.filter(x=>x!==s) : [...ob.shops,s];
+  renderOnboarding();
+}
+function obAddShop(){
+  const v = ob.custom.trim(); if(!v) return;
+  if(!ob.shops.includes(v)) ob.shops.push(v);
+  ob.custom=""; renderOnboarding();
+}
+function obTogglePick(id){
+  ob.picked = ob.picked.includes(id) ? ob.picked.filter(x=>x!==id) : [...ob.picked,id];
+  renderOnboarding();
+}
+function finishOnboarding(){
+  S.household = ob.household.trim() || "My household";
+  S.users = [ob.m1.trim()||"Me", ob.m2.trim()||"Partner"].filter(Boolean);
+  S.user = S.users[0];
+  S.budget = ob.budget>0?ob.budget:160;
+  S.shops = ob.shops.length?ob.shops:["FairPrice"];
+  const items = ob.picked.map(cid=>({id:S.nextId++,cid,qty:1,status:"planned",by:S.user,actual:null,shop:null}));
+  const name = "Week of " + new Date().toLocaleDateString("en-SG",{day:"numeric",month:"short"});
+  const list = {id:S.nextId++, name, budget:S.budget, items, offPlan:[]};
+  S.lists.push(list); S.activeList = list.id;
+  S.onboarded = true;
+  const p = document.getElementById("obPanel"); if(p) p.remove();
+  save(); toast(`Welcome, ${S.user}! List created 🎉`);
+}
+function loadDemo(){
+  S = demoState();
+  const p = document.getElementById("obPanel"); if(p) p.remove();
+  save(); toast("Demo household loaded");
+}
+
+/* ================= LIST tab ================= */
+function shopOptions(sel){
+  const opts = [...new Set([...S.shops, sel].filter(Boolean))];
+  return `<option value="">Any shop</option>` + opts.map(s=>`<option ${s===sel?"selected":""}>${s}</option>`).join("");
+}
+function qtyOptions(q){
+  return [1,2,3,4,5,6,7,8].map(n=>`<option ${n===q?"selected":""}>${n}</option>`).join("");
+}
+function itemRow(li){
+  const c = catItem(li.cid);
+  const pr = predict(c);
+  const lineEst = li.actual!=null ? li.actual : (pr.p||0)*li.qty;
+  const confMark = pr.conf>=3 ? "" : "~";
+  const priceBit = !S.showPrices ? "" :
+    (li.actual!=null?`<span>paid ${fmt(li.actual)}</span>`:`<span class="${pr.conf<3?'conf':''}">${confMark}${pr.p?fmt(pr.p):'?'} /${c.unit}</span>`);
+  const shopSel = `<select class="shopsel" onchange="setShop(${li.id},this.value)">${shopOptions(itemShop(li))}</select>`;
+  return `<div class="item ${li.status==='bought'?'bought':''}">
+    <div class="chk" onclick="toggleBought(${li.id})">${li.status==='bought'?'✓':''}</div>
+    <div class="iinfo"><div class="nm">${c.name}</div><div class="sub">${priceBit}${shopSel}</div></div>
+    <select class="qsel" onchange="setQty(${li.id},+this.value)">${qtyOptions(li.qty)}</select>
+    ${S.showPrices?`<div class="prc">${fmt(lineEst)}</div>`:""}
+    <button class="del" onclick="delItem(${li.id})">✕</button></div>`;
+}
+function renderList(){
+  const l = L();
+  if(!l) return `<div class="empty">No list yet — create one in My Lists.</div>`;
+  const t = totals();
+  const over = t.est > l.budget;
+  let html = "";
+  html += `<div class="addwrap">
+    <div class="addrow"><input id="addInput" placeholder="Add item… just type 'milk' or 'fish'" autocomplete="off"
+      oninput="renderSuggest()" onkeydown="if(event.key==='Enter')pickFirst()" onfocus="renderSuggest()"></div>
+    <div id="sugPanel"></div></div>`;
+  const nItems = l.items.filter(li=>li.status!=="skipped").length;
+  const nBought = l.items.filter(li=>li.status==="bought").length;
+  html += `<div class="mode-row"><span class="cnt">${nItems} items · ${nBought} bought</span>
+    <button class="mode-btn ${S.groupBy==='shop'?'on':''}" onclick="S.groupBy=S.groupBy==='shop'?'cat':'shop';save()">
+      ${S.groupBy==='shop'?'🏬 By shop':'🗂 By category'}</button>
+    <button class="mode-btn ${S.showPrices?'':'on'}" onclick="S.showPrices=!S.showPrices;save()">
+      ${S.showPrices?'🙈 Hide prices':'✨ Simple mode'}</button></div>`;
+  if(over && S.showPrices) html += `<div class="card" style="background:var(--amber-soft)"><span class="pill warn">⚠ Est. ${fmt(t.est-l.budget)} over budget</span>
+     <div class="note">Your priciest items are in Meat & Seafood — skip one, or check this week's 2-for offers.</div></div>`;
+  const live = l.items.filter(li=>li.status!=="skipped");
+  if(S.groupBy==="shop"){
+    const groups = [...S.shops, null];
+    const other = live.filter(li=>{const s=itemShop(li); return s && !S.shops.includes(s);});
+    groups.forEach(g=>{
+      let items = live.filter(li=>itemShop(li)===g);
+      if(g===null) items = items.concat(other);
+      if(!items.length) return;
+      html += `<div class="cat-label">${g||"Anywhere"}</div>`;
+      items.sort((a,b)=>(a.status==="bought")-(b.status==="bought"));
+      items.forEach(li=>html+=itemRow(li));
+    });
+  } else {
+    CATS.forEach(cat=>{
+      const items = live.filter(li=>catItem(li.cid).cat===cat);
+      if(!items.length) return;
+      html += `<div class="cat-label">${cat}</div>`;
+      items.sort((a,b)=>(a.status==="bought")-(b.status==="bought"));
+      items.forEach(li=>html+=itemRow(li));
+    });
+  }
+  if(l.offPlan.length){
+    html += `<div class="cat-label">Bought outside plan</div>`;
+    l.offPlan.forEach((o,i)=>{
+      html += `<div class="item"><div class="iinfo"><div class="nm">${o.desc}</div><div class="sub">off-plan</div></div>
+        <div class="prc">${fmt(o.amt)}</div><button class="del" onclick="L().offPlan.splice(${i},1);save()">✕</button></div>`;
+    });
+  }
+  html += `<div style="height:12px"></div>
+    <div style="display:flex;gap:10px;margin:4px 0 12px">
+      <button class="wa-btn" style="margin:0;flex:1.2" onclick="shareWA()">🟢 WhatsApp</button>
+      <button class="wa-btn" style="margin:0;flex:1;background:var(--accent)" onclick="shareLink()">🔗 Web link</button>
+    </div>`;
+  return html;
+}
+
+/* --- adding products --- */
+function suggestions(q){
+  q = q.toLowerCase().trim();
+  if(!q) return [];
+  const qTok = q.split(/\s+/);
+  return S.catalog.map(c=>{
+    const name = c.name.toLowerCase();
+    let score = 0;
+    qTok.forEach(t=>{
+      if(name.includes(t)) score += t.length>=3?3:1;
+      else if(name.split(/[\s()]+/).some(w=>w.startsWith(t))) score += 1;
+    });
+    return {c, score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score || b.c.hist.length-a.c.hist.length)
+    .slice(0,5).map(x=>x.c);
+}
+function renderSuggest(){
+  const inp = document.getElementById("addInput");
+  const panel = document.getElementById("sugPanel");
+  if(!inp || !panel) return;
+  const q = inp.value.trim();
+  if(!q){ panel.innerHTML=""; return; }
+  const sugs = suggestions(q);
+  const onListIds = new Set(L().items.filter(li=>li.status!=="skipped").map(li=>li.cid));
+  let h = `<div class="suggest">`;
+  sugs.forEach(c=>{
+    h += `<div class="sug" onclick="addByCid(${c.id})"><span>${c.name}</span>
+      ${onListIds.has(c.id)?'<span class="onlist">on list · +1</span>':''}
+      <span class="scat">${c.cat.split(" ")[0]}</span></div>`;
+  });
+  if(!sugs.some(c=>c.name.toLowerCase()===q.toLowerCase()))
+    h += `<div class="sug new" onclick="addNew()">＋ Add “${q}”</div>`;
+  if(sugs.length>1) h += `<div class="sug-hint">Several variants — pick one, or just add the plain word. Your receipt will teach the exact brand & size.</div>`;
+  h += `</div>`;
+  panel.innerHTML = h;
+}
+function addByCid(cid){
+  const c = catItem(cid);
+  const l = L();
+  const existing = l.items.find(li=>li.cid===cid && li.status!=="skipped");
+  if(existing) existing.qty = Math.min(8, existing.qty+1);
+  else l.items.push({id:S.nextId++, cid, qty:1, status:"planned", by:S.user, actual:null, shop:null});
+  save(); toast(existing?`${c.name} → x${existing.qty}`:`Added ${c.name}`);
+  simulatePartnerPing(`${S.user} added ${c.name}`);
+}
+function addNew(){
+  const inp = document.getElementById("addInput");
+  const name = inp.value.trim(); if(!name) return;
+  const pretty = name[0].toUpperCase()+name.slice(1);
+  const c = {id:S.nextId++, name:pretty, cat:"Pantry", unit:"pc", hist:[], staple:false, shop:null};
+  S.catalog.push(c);
+  L().items.push({id:S.nextId++, cid:c.id, qty:1, status:"planned", by:S.user, actual:null, shop:null});
+  save(); toast(`Added ${pretty} — price learns from your first receipt`);
+  simulatePartnerPing(`${S.user} added ${pretty}`);
+}
+function pickFirst(){
+  const inp = document.getElementById("addInput");
+  const q = inp.value.trim(); if(!q) return;
+  const sugs = suggestions(q);
+  const exact = sugs.find(c=>c.name.toLowerCase()===q.toLowerCase());
+  if(exact) addByCid(exact.id);
+  else if(sugs.length===1) addByCid(sugs[0].id);
+  else addNew();
+}
+function toggleBought(id){ const li=L().items.find(x=>x.id===id); li.status = li.status==="bought"?"planned":"bought"; save(); }
+function setQty(id,q){ const li=L().items.find(x=>x.id===id); li.qty=q; save(); }
+function setShop(id,s){ const li=L().items.find(x=>x.id===id); li.shop = s||null; save(); }
+function delItem(id){ const l=L(); l.items = l.items.filter(x=>x.id!==id); save(); }
+function simulatePartnerPing(txt){
+  const other = S.users[1];
+  if(!other) return;
+  setTimeout(()=>toast(`📲 WhatsApp → ${other}: "${txt}"`), 900);
+}
+
+/* ================= MY LISTS tab ================= */
+let newListOpen = false, nl = null;
+function renderLists(){
+  let html = `<div class="mode-row"><span class="cnt">${S.lists.length} saved list${S.lists.length===1?"":"s"}</span>
+    <button class="mode-btn on" onclick="openNewList()">＋ New list</button></div>`;
+  if(newListOpen){
+    html += `<div class="card"><h3>New list</h3>
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin:4px 2px 6px">NAME</label>
+      <input type="text" id="nlName" value="${nl.name}" oninput="nl.name=this.value"
+        style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px;font-size:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 2px 6px">BUDGET (S$)</label>
+      <input type="number" id="nlBudget" value="${nl.budget}" oninput="nl.budget=parseFloat(this.value)||S.budget" inputmode="decimal"
+        style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px;font-size:14px">
+      <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin:14px 2px 8px">COMMONLY USED ITEMS — tap to include</label>
+      <div class="pickgrid">${commonItems().map(c=>
+        `<button class="chip ${nl.picked.includes(c.id)?'sel':''}" onclick="nlToggle(${c.id})">${c.name}</button>`).join("")}</div>
+      <div class="note" style="margin:10px 0">${nl.picked.length} items · est. ${fmt(nl.picked.reduce((s,cid)=>s+(predict(catItem(cid)).p||0),0))}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn sec" onclick="newListOpen=false;render()">Cancel</button>
+        <button class="btn" onclick="createList()">Create list</button></div></div>`;
+  }
+  if(!S.lists.length && !newListOpen) html += `<div class="empty">No lists yet. Create your first one!</div>`;
+  S.lists.slice().reverse().forEach(l=>{
+    const n = l.items.filter(li=>li.status!=="skipped").length;
+    const b = l.items.filter(li=>li.status==="bought").length;
+    const est = l.items.filter(li=>li.status!=="skipped")
+      .reduce((s,li)=>s+(li.actual!=null?li.actual:(predict(catItem(li.cid)).p||0)*li.qty),0);
+    html += `<div class="lists-card ${l.id===S.activeList?'active':''}" onclick="S.activeList=${l.id};tab='list';syncNav();save()">
+      <div class="linfo"><div class="lname">${l.name}</div>
+        <div class="lsub">${n} items · ${b} bought · est. ${fmt(est)} / $${l.budget}</div></div>
+      ${l.id===S.activeList?'<span class="lbadge">ACTIVE</span>':''}
+      <button class="del" title="Duplicate" style="font-size:14px" onclick="event.stopPropagation();duplicateList(${l.id})">⧉</button>
+      <button class="del" onclick="event.stopPropagation();deleteList(${l.id})">✕</button></div>`;
+  });
+  html += `<div class="note" style="margin-top:14px">💡 Tip: keep a rolling "Week of…" list plus special ones — "CNY reunion dinner", "Deepavali", "Baby supplies".</div>`;
+  return html;
+}
+function commonItems(){
+  return S.catalog.slice().sort((a,b)=>(b.staple-a.staple)||(b.hist.length-a.hist.length)).slice(0,24);
+}
+function openNewList(){
+  nl = {name:"Week of "+new Date().toLocaleDateString("en-SG",{day:"numeric",month:"short"}),
+        budget:S.budget, picked:S.catalog.filter(c=>c.staple).map(c=>c.id)};
+  newListOpen = true; render();
+}
+function nlToggle(id){
+  nl.picked = nl.picked.includes(id) ? nl.picked.filter(x=>x!==id) : [...nl.picked,id];
+  render();
+}
+function createList(){
+  const items = nl.picked.map(cid=>({id:S.nextId++,cid,qty:1,status:"planned",by:S.user,actual:null,shop:null}));
+  const list = {id:S.nextId++, name:nl.name.trim()||"Untitled list", budget:nl.budget>0?nl.budget:S.budget, items, offPlan:[]};
+  S.lists.push(list); S.activeList = list.id;
+  newListOpen = false; tab = "list"; syncNav();
+  save(); toast(`"${list.name}" created ✓`);
+}
+function duplicateList(id){
+  const src = S.lists.find(l=>l.id===id); if(!src) return;
+  const copy = {
+    id: S.nextId++,
+    name: src.name + " (copy)",
+    budget: src.budget,
+    items: src.items.filter(li=>li.status!=="skipped").map(li=>
+      ({id:S.nextId++, cid:li.cid, qty:li.qty, status:"planned", by:S.user, actual:null, shop:li.shop})),
+    offPlan: []
+  };
+  S.lists.push(copy); S.activeList = copy.id;
+  save(); toast(`Duplicated → "${copy.name}"`);
+}
+function deleteList(id){
+  if(!confirm("Delete this list?")) return;
+  S.lists = S.lists.filter(l=>l.id!==id);
+  if(S.activeList===id) S.activeList = S.lists.length?S.lists[S.lists.length-1].id:null;
+  save();
+}
+function syncNav(){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.tab===tab));
+}
+
+/* ================= RECEIPT tab ================= */
+let pendingParse = null;
+function renderReceipt(){
+  let html = `<div class="card"><h3>Upload your receipt</h3>
+    <div class="note" style="margin:0 0 10px">In the real app you'd snap a photo — an LLM extracts the line items. Here, paste lines as <b>item&nbsp;name&nbsp;&nbsp;price</b>, or load a sample FairPrice receipt.</div>
+    <textarea id="rcpt" placeholder="JASMINE RICE 5KG  13.90&#10;EGGS 30S  8.80&#10;MEIJI FRESH MILK 2L  6.55"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn sec" onclick="loadSample()">Load sample receipt</button>
+      <button class="btn" onclick="parseReceipt()">Parse receipt</button>
+    </div></div>`;
+  if(pendingParse){
+    html += `<div class="card"><h3>Confirm matches (asked once, remembered forever)</h3>`;
+    pendingParse.forEach((m,i)=>{
+      html += `<div class="match"><div><div>${m.matched? "✅":"❓"} <b>${fmt(m.price)}</b></div><div class="raw">${m.raw}</div></div>
+        <select onchange="pendingParse[${i}].cid=+this.value">
+          <option value="0">— new/skip —</option>
+          ${S.catalog.map(c=>`<option value="${c.id}" ${m.cid===c.id?"selected":""}>${c.name}</option>`).join("")}
+        </select></div>`;
+    });
+    html += `<div style="margin-top:12px"><button class="btn" onclick="applyReceipt()">Apply — update prices & actuals</button></div></div>`;
+  }
+  html += `<div class="card"><h3>Why this matters</h3><div class="note">
+    Every receipt teaches the app your real prices at your usual shops. Estimates sharpen from "~guess" to solid predictions — last 4 weeks accuracy: ${S.estAccuracy.join("% → ")}%.</div></div>`;
+  html += `<div class="card"><h3>Shopping time (enhanced)</h3><div class="note">
+    ⏱ Last trip: 52 min at FairPrice Jurong Point.<br>12 of your staples are stable-priced — moving them to a monthly FairPrice Online order could save ~35 min/week.</div></div>`;
+  return html;
+}
+function loadSample(){
+  document.getElementById("rcpt").value =
+`JASMINE RICE 5KG  14.20
+EGGS FRESH 30S  8.80
+MEIJI FRESH MILK 2L  6.55
+KANG KONG PKT  1.45
+CHKN THIGH FILLET 500G  6.10
+GARDENIA WHT 400G  2.90
+TOILET ROLL 3PLY 10S  6.90
+COOKING OIL SUNFLR 2L  8.30
+TOFU SILKEN TWIN  1.60
+DEL MONTE BANANA  3.20`;
+}
+function parseReceipt(){
+  const txt = document.getElementById("rcpt").value.trim();
+  if(!txt) return toast("Paste or load a receipt first");
+  pendingParse = txt.split("\n").map(line=>{
+    const m = line.trim().match(/^(.*?)[\s]+(\d+\.\d{2})$/);
+    if(!m) return null;
+    const raw = m[1].trim(), price = parseFloat(m[2]);
+    let best=null, bestScore=0;
+    const rTok = raw.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/);
+    S.catalog.forEach(c=>{
+      const cTok = c.name.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/);
+      let score = 0;
+      rTok.forEach(t=>cTok.forEach(ct=>{ if(ct.startsWith(t.slice(0,4))&&t.length>2) score++; }));
+      if(score>bestScore){ bestScore=score; best=c; }
+    });
+    return {raw, price, cid: bestScore>0?best.id:0, matched: bestScore>0};
+  }).filter(Boolean);
+  render(); toast(`Parsed ${pendingParse.length} lines — ${pendingParse.filter(x=>x.matched).length} auto-matched`);
+}
+function applyReceipt(){
+  let learned=0, actuals=0;
+  const l = L();
+  pendingParse.forEach(m=>{
+    if(!m.cid) return;
+    const c = catItem(m.cid);
+    c.hist.push(m.price); if(c.hist.length>8) c.hist.shift(); learned++;
+    const li = l && l.items.find(x=>x.cid===m.cid && x.status!=="skipped");
+    if(li){ li.actual = m.price*li.qty; li.status="bought"; actuals++; }
+  });
+  pendingParse = null;
+  save();
+  toast(`✓ ${learned} prices learned, ${actuals} items marked bought`);
+  simulatePartnerPing(`Shop done — ${fmt(totals().act)} spent`);
+}
+
+/* ================= INSIGHTS tab ================= */
+function renderInsights(){
+  const l = L(); const t = totals();
+  const budget = l?l.budget:S.budget;
+  const byCat = {};
+  if(l){
+    l.items.forEach(li=>{ if(li.status==="skipped")return;
+      const c=catItem(li.cid); const v = li.actual!=null?li.actual:(predict(c).p||0)*li.qty;
+      byCat[c.cat]=(byCat[c.cat]||0)+v; });
+    l.offPlan.forEach(o=>{ byCat["Off-plan"]=(byCat["Off-plan"]||0)+o.amt; });
+  }
+  const maxCat = Math.max(...Object.values(byCat),1);
+  const colors = {"Rice & Staples":"#1e7d4f","Fresh Produce":"#5cb85c","Meat & Seafood":"#c0392b","Dairy & Eggs":"#e0a800","Pantry":"#8e6c3a","Household":"#2b6cb0","Snacks & Drinks":"#b83280","Off-plan":"#777"};
+  const hits = S.history.map(h=>h.spend<=h.budget);
+  const streak = (()=>{ let s=0; for(let i=hits.length-1;i>=0;i--){ if(hits[i])s++; else break;} return s; })();
+  const maxSpend = Math.max(...S.history.map(h=>h.spend), budget)*1.1;
+  const movers = S.catalog.filter(c=>c.hist.length>=2)
+    .map(c=>({n:c.name, d:(c.hist[c.hist.length-1]-c.hist[0])/c.hist[0]*100}))
+    .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,4);
+
+  let html = `<div class="statgrid">
+    <div class="stat"><div class="v">${fmt(t.est)}</div><div class="l">This list (est.)</div></div>
+    <div class="stat"><div class="v">${Math.round(t.est/budget*100)}%</div><div class="l">Of $${budget} budget</div></div>
+    <div class="stat"><div class="v">${streak} wk${streak===1?"":"s"} 🔥</div><div class="l">Under-budget streak</div></div>
+    <div class="stat"><div class="v">${S.estAccuracy[S.estAccuracy.length-1]}%</div><div class="l">Estimate accuracy</div></div>
+  </div>`;
+
+  html += `<div class="card"><h3>Where the money goes</h3>`;
+  Object.entries(byCat).sort((a,b)=>b[1]-a[1]).forEach(([cat,v])=>{
+    html += `<div class="hbar"><div class="lbl">${cat.replace(" & ","/")}</div>
+      <div class="trk"><div class="fil" style="width:${v/maxCat*100}%;background:${colors[cat]||'#888'}"></div></div>
+      <div class="val">${fmt(v)}</div></div>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="card"><h3>Last ${S.history.length} weeks vs budget</h3><div class="weeks">`;
+  S.history.forEach(h=>{
+    const over = h.spend>h.budget;
+    html += `<div class="wk"><div class="amt">$${Math.round(h.spend)}</div>
+      <div class="col ${over?'over':''}" style="height:${h.spend/maxSpend*100}%"></div><div class="cap">${h.label}</div></div>`;
+  });
+  html += `</div><div class="note">Target = $${budget}. Red bar = over budget.</div>
+    <div class="streak">${hits.map(h=>`<div class="dot ${h?'hit':'miss'}">${h?'✓':'✕'}</div>`).join("")}</div></div>`;
+
+  html += `<div class="card"><h3>Your basket's price movers</h3>`;
+  movers.forEach(m=>{
+    html += `<div class="riser"><span>${m.n}</span><span class="${m.d>=0?'up':'dn'}">${m.d>=0?'▲':'▼'} ${Math.abs(m.d).toFixed(1)}%</span></div>`;
+  });
+  html += `<div class="note">Tracked from your own receipts — your personal inflation, not the CPI.</div></div>`;
+
+  html += `<div class="card"><h3>Suggestions</h3><div class="note">
+    💡 Toilet Rolls & Cooking Oil rose >5% — both are on 2-for bundles this month; buying double saves ~$3.40.<br><br>
+    📦 Your stable staples could move to a monthly online order — locks time savings and price.<br><br>
+    📲 Enable the weekly WhatsApp digest so ${S.users.join(" & ")||"everyone"} sees this summary every Sunday.</div></div>`;
+  return html;
+}
+
+/* ================= WhatsApp share ================= */
+function buildWAMessage(){
+  const l = L(); const t = totals();
+  let msg = `🛒 *${l.name} — ${S.household}*\n`;
+  const live = l.items.filter(li=>li.status!=="skipped");
+  const line = li => `${li.status==='bought'?'✅':'◻️'} ${catItem(li.cid).name}${li.qty>1?` x${li.qty}`:""}`;
+  if(S.groupBy==="shop"){
+    const groups = [...S.shops, null];
+    const other = live.filter(li=>{const s=itemShop(li); return s && !S.shops.includes(s);});
+    groups.forEach(g=>{
+      let items = live.filter(li=>itemShop(li)===g);
+      if(g===null) items = items.concat(other);
+      if(!items.length) return;
+      msg += `\n*${g||"Anywhere"}*\n` + items.map(line).join("\n") + "\n";
+    });
+  } else {
+    CATS.forEach(cat=>{
+      const items = live.filter(li=>catItem(li.cid).cat===cat);
+      if(!items.length) return;
+      msg += `\n*${cat}*\n` + items.map(line).join("\n") + "\n";
+    });
+  }
+  const open = live.filter(li=>li.status!=="bought").length;
+  msg += `\n📋 ${open} to buy`;
+  if(S.showPrices) msg += ` · 💰 Est. ${fmt(t.est)} / Budget $${l.budget}`;
+  return msg;
+}
+function shareWA(){
+  const msg = buildWAMessage();
+  const other = S.users[1] || "Family";
+  const esc = msg.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const rich = esc.replace(/\*([^*\n]+)\*/g,"<b>$1</b>").replace(/_([^_\n]+)_/g,"<i>$1</i>");
+  const now = new Date().toLocaleTimeString("en-SG",{hour:"numeric",minute:"2-digit"});
+  const ov = document.createElement("div");
+  ov.className = "wa-overlay";
+  ov.innerHTML = `<div class="wa-sheet">
+    <div class="wa-head"><div class="avatar" style="color:#075e54;font-weight:800">${other[0]}</div>
+      <div class="who"><b>${other}</b><span>online</span></div>
+      <button class="x" onclick="this.closest('.wa-overlay').remove()">✕</button></div>
+    <div class="wa-chat"><div class="wa-bubble">${rich}<div class="meta">${now} <span class="ticks">✓✓</span></div></div></div>
+    <div class="wa-actions">
+      <button class="wa-copy" onclick="copyWA(this)">Copy text</button>
+      <a class="wa-open" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Open WhatsApp</a>
+    </div></div>`;
+  ov.addEventListener("click",e=>{ if(e.target===ov) ov.remove(); });
+  document.querySelector(".phone").appendChild(ov);
+}
+function copyWA(btn){
+  const msg = buildWAMessage();
+  const done = ()=>{ btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent="Copy text",1600); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(done).catch(()=>fallbackCopy(msg,done));
+  } else fallbackCopy(msg,done);
+}
+function fallbackCopy(text,done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ toast("Select & copy manually"); }
+  ta.remove();
+}
+
+/* ================= Web view share (shopper mode) ================= */
+function encodeShareData(){
+  const l = L();
+  const data = {n:l.name, h:S.household, items:l.items.filter(li=>li.status!=="skipped").map(li=>({
+    t:catItem(li.cid).name, q:li.qty, s:itemShop(li)||"", d:li.status==="bought"?1:0}))};
+  return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+let _shareUrl = "";
+function shareLink(){
+  _shareUrl = location.href.split("#")[0] + "#shop=" + encodeShareData();
+  const ov = document.createElement("div");
+  ov.className = "wa-overlay";
+  ov.innerHTML = `<div class="wa-sheet">
+    <div class="wa-head" style="background:var(--accent)">
+      <div class="avatar" style="background:#fff;color:var(--accent)">🔗</div>
+      <div class="who"><b>Shareable web view</b><span>anyone with the link can tick items off</span></div>
+      <button class="x" onclick="this.closest('.wa-overlay').remove()">✕</button></div>
+    <div style="padding:16px;background:#f0f2f5">
+      <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:10.5px;font-family:ui-monospace,monospace;word-break:break-all;max-height:110px;overflow:auto">${_shareUrl}</div>
+      <div class="note">Send this to your helper or spouse — it opens a simple checklist, no app or login needed. In production this becomes a short link (grocerylah.app/l/x7k2) with live two-way sync, so their ticks appear in your app instantly.</div></div>
+    <div class="wa-actions">
+      <button class="wa-copy" onclick="copyShareLink(this)">Copy link</button>
+      <button class="wa-open" style="border:0" onclick="window.open(_shareUrl,'_blank')">Preview it</button>
+      <a class="wa-open" style="flex:.7;background:#075e54" href="https://wa.me/?text=${encodeURIComponent("🛒 Grocery list: ")}${encodeURIComponent(_shareUrl)}" target="_blank" rel="noopener">Send 🟢</a>
+    </div></div>`;
+  ov.addEventListener("click",e=>{ if(e.target===ov) ov.remove(); });
+  document.querySelector(".phone").appendChild(ov);
+}
+function copyShareLink(btn){
+  const done = ()=>{ btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent="Copy link",1600); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(_shareUrl).then(done).catch(()=>fallbackCopy(_shareUrl,done));
+  } else fallbackCopy(_shareUrl,done);
+}
+function renderShopper(data){
+  const key = "gl_shop_" + (data.n||"list").replace(/\W/g,"") + "_" + data.items.length;
+  let done;
+  try{ done = JSON.parse(localStorage.getItem(key)) || data.items.map(i=>i.d); }
+  catch(e){ done = data.items.map(i=>i.d); }
+  const ph = document.getElementById("phone");
+  function paint(){
+    const n = done.filter(Boolean).length;
+    let h = `<header><div class="top"><div><h1>🛒 ${data.n}</h1>
+      <div class="week">${data.h?data.h+" · ":""}shopping view</div></div></div>
+      <div class="budgetbox"><div class="nums"><span><b>${n} / ${data.items.length}</b> in the trolley</span>
+      <span>${n===data.items.length?"All done! 🎉":""}</span></div>
+      <div class="bar"><div class="act" style="width:${data.items.length?n/data.items.length*100:0}%"></div></div></div></header>
+      <main style="padding:18px 16px">`;
+    const groups = [...new Set(data.items.map(i=>i.s||"Anywhere"))];
+    groups.forEach(g=>{
+      h += `<div class="cat-label">${g}</div>`;
+      data.items.forEach((it,idx)=>{
+        if((it.s||"Anywhere")!==g) return;
+        h += `<div class="item ${done[idx]?'bought':''}" onclick="_shopToggle(${idx})" style="cursor:pointer">
+          <div class="chk">${done[idx]?'✓':''}</div>
+          <div class="iinfo"><div class="nm">${it.t}</div></div>
+          ${it.q>1?`<span style="font-size:13px;font-weight:700;color:var(--accent)">x${it.q}</span>`:""}</div>`;
+      });
+    });
+    h += `<div class="note" style="text-align:center;margin:16px 0 22px">Tap an item when it's in the trolley.<br>Ticks are saved on this device — in production they sync live to the household.</div></main>`;
+    ph.innerHTML = h;
+  }
+  window._shopToggle = idx=>{
+    done[idx] = done[idx]?0:1;
+    try{ localStorage.setItem(key, JSON.stringify(done)); }catch(e){}
+    paint();
+  };
+  paint();
+}
+
+/* ================= render ================= */
+function render(){
+  renderHeader();
+  if(!S.onboarded){ document.getElementById("main").innerHTML=""; renderOnboarding(); return; }
+  const m = document.getElementById("main");
+  m.innerHTML = tab==="list" ? renderList() : tab==="lists" ? renderLists() : tab==="receipt" ? renderReceipt() : renderInsights();
+}
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById("toast");
+  if(!t) return;
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+}
+/* boot: shopper web-view if opened via share link, else the app */
+const shopMatch = (typeof location!=="undefined" && location.hash||"").match(/^#shop=(.+)/);
+if(shopMatch){
+  try{ renderShopper(JSON.parse(decodeURIComponent(escape(atob(shopMatch[1]))))); }
+  catch(e){ render(); }
+} else render();
+</script>
+</body>
+</html>
