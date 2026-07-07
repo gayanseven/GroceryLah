@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { buildWAMessage, encodeShareData, waRichHtml } from "@/lib/share";
+import { buildWAMessage, encodeShareData } from "@/lib/share";
 
 function copy(text, onDone, onFail) {
   if (navigator.clipboard?.writeText) {
@@ -19,81 +19,48 @@ function copy(text, onDone, onFail) {
   }
 }
 
-export function WhatsAppSheet({ onClose }) {
+export function ShareSheet({ onClose }) {
   const { S } = useApp();
   const [copied, setCopied] = useState(false);
   const msg = useMemo(() => buildWAMessage(S), [S]);
-  const other = S.users[1] || "Family";
-  const now = new Date().toLocaleTimeString("en-SG", { hour: "numeric", minute: "2-digit" });
+  const url = useMemo(() => `${window.location.origin}/s#${encodeShareData(S)}`, [S]);
 
   return (
     <div className="wa-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="wa-sheet">
-        <div className="wa-head">
-          <div className="avatar">{other[0]}</div>
-          <div className="who"><b>{other}</b><span>online</span></div>
+        <div className="wa-head" style={{ background: "var(--accent)" }}>
+          <div className="avatar" style={{ background: "rgba(255,255,255,.15)", color: "#fff", fontSize: 18 }}>🔗</div>
+          <div className="who"><b>Share list</b></div>
           <button className="x" onClick={onClose}>✕</button>
         </div>
-        <div className="wa-chat">
-          <div className="wa-bubble">
-            <span dangerouslySetInnerHTML={{ __html: waRichHtml(msg) }} />
-            <div className="meta">{now} <span className="ticks">✓✓</span></div>
-          </div>
-        </div>
-        <div className="wa-actions">
-          <button className="wa-copy"
-            onClick={() => copy(msg, () => { setCopied(true); setTimeout(() => setCopied(false), 1600); })}>
-            {copied ? "Copied ✓" : "Copy text"}
-          </button>
-          <a className="wa-open" target="_blank" rel="noopener noreferrer"
-            href={`https://wa.me/?text=${encodeURIComponent(msg)}`}>
-            Open WhatsApp
+        <div className="share-opts">
+          <a className="share-opt"
+            href={`https://wa.me/?text=${encodeURIComponent(msg)}`}
+            target="_blank" rel="noopener noreferrer">
+            <span className="share-opt-ic">🟢</span>
+            <div className="share-opt-txt">
+              <b>Text list</b>
+              <span>Formatted grocery list in WhatsApp</span>
+            </div>
+            <span className="share-opt-arr">›</span>
           </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function WebLinkSheet({ onClose }) {
-  const { S } = useApp();
-  const [copied, setCopied] = useState(false);
-  const url = useMemo(
-    () => `${window.location.origin}/s#${encodeShareData(S)}`,
-    [S]
-  );
-
-  return (
-    <div className="wa-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="wa-sheet">
-        <div className="wa-head link">
-          <div className="avatar" style={{ background: "#fff", color: "var(--accent)" }}>🔗</div>
-          <div className="who">
-            <b>Shareable web view</b>
-            <span>anyone with the link can tick items off</span>
-          </div>
-          <button className="x" onClick={onClose}>✕</button>
-        </div>
-        <div style={{ padding: 16, background: "#f0f2f5" }}>
-          <div className="linkbox">{url}</div>
-          <div className="note">
-            Send this to your helper or spouse — it opens a simple checklist, no app or login
-            needed. Ticks are saved on their device; live two-way sync arrives with accounts in
-            milestone 2.
-          </div>
-        </div>
-        <div className="wa-actions">
-          <button className="wa-copy"
-            onClick={() => copy(url, () => { setCopied(true); setTimeout(() => setCopied(false), 1600); })}>
-            {copied ? "Copied ✓" : "Copy link"}
-          </button>
-          <button className="wa-open dark" onClick={() => window.open(url, "_blank")}>
-            Preview it
-          </button>
-          <a className="wa-open" style={{ flex: 0.7 }} target="_blank" rel="noopener noreferrer"
-            href={`https://wa.me/?text=${encodeURIComponent("\u{1F6D2} Grocery list: " + url)}`}>
-            Send 🟢
+          <div className="share-divider" />
+          <a className="share-opt"
+            href={`https://wa.me/?text=${encodeURIComponent("🛒 Here's our shopping list: " + url)}`}
+            target="_blank" rel="noopener noreferrer">
+            <span className="share-opt-ic">🔗</span>
+            <div className="share-opt-txt">
+              <b>Web link</b>
+              <span>Anyone can open &amp; tick off, no login</span>
+            </div>
+            <span className="share-opt-arr">›</span>
           </a>
+          <div className="share-copy-row">
+            <button className="share-copy-btn"
+              onClick={() => copy(url, () => { setCopied(true); setTimeout(() => setCopied(false), 1600); })}>
+              {copied ? "Copied ✓" : "Copy link"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

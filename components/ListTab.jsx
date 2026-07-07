@@ -4,7 +4,7 @@ import { useApp } from "@/lib/store";
 import { CATS } from "@/lib/catalog";
 import { activeList, catItem, itemShop, predict, lineEstimate, totals, fmt } from "@/lib/pricing";
 import { suggestions } from "@/lib/suggest";
-import { WhatsAppSheet, WebLinkSheet } from "./ShareSheets";
+import { ShareSheet } from "./ShareSheets";
 
 function ItemRow({ li }) {
   const { S, update } = useApp();
@@ -69,7 +69,7 @@ function ItemRow({ li }) {
 export default function ListTab() {
   const { S, update, toast, partnerPing } = useApp();
   const [q, setQ] = useState("");
-  const [sheet, setSheet] = useState(null); // 'wa' | 'link' | null
+  const [sheet, setSheet] = useState(null); // 'share' | null
   const l = activeList(S);
 
   if (!l) return <div className="empty">No list yet — create one in My Lists.</div>;
@@ -232,12 +232,10 @@ export default function ListTab() {
       )}
 
       <div className="share-row">
-        <button className="wa-btn" onClick={() => setSheet("wa")}>🟢 WhatsApp</button>
-        <button className="wa-btn link-btn" onClick={() => setSheet("link")}>🔗 Web link</button>
+        <button className="wa-btn" onClick={() => setSheet("share")}>🔗 Share</button>
       </div>
 
-      {sheet === "wa" && <WhatsAppSheet onClose={() => setSheet(null)} />}
-      {sheet === "link" && <WebLinkSheet onClose={() => setSheet(null)} />}
+      {sheet === "share" && <ShareSheet onClose={() => setSheet(null)} />}
     </>
   );
 }
